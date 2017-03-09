@@ -1,0 +1,12 @@
+#-----------------------------------------------------------
+# Vivado v2015.4.2 (64-bit)
+# SW Build 1494164 on Fri Feb 26 04:18:56 MST 2016
+# IP Build 1491208 on Wed Feb 24 03:25:39 MST 2016
+# Start of session at: Thu Mar 09 09:57:15 2017
+# Process ID: 12276
+# Current directory: C:/Users/LqlSoft Computer/Xilinx/Lql/ALU_BANZI/ALU_BANZI.runs/synth_1
+# Command line: vivado.exe -log ALU.vds -mode batch -messageDb vivado.pb -notrace -source ALU.tcl
+# Log file: C:/Users/LqlSoft Computer/Xilinx/Lql/ALU_BANZI/ALU_BANZI.runs/synth_1/ALU.vds
+# Journal file: C:/Users/LqlSoft Computer/Xilinx/Lql/ALU_BANZI/ALU_BANZI.runs/synth_1\vivado.jou
+#-----------------------------------------------------------
+source ALU.tcl -notrace
