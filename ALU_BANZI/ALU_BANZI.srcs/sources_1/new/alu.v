@@ -1,86 +1,98 @@
 `timescale 1ns / 1ps
 
 module ALU(
-input [3:0] a,
-input enter,
-output reg [7:0][7:0] seg
-);
+    input [3:0] a,
+    input enter,
+    output reg [7:0] dig,
+    output reg [7:0] seg0,
+    output reg [7:0] seg1
+    );
 
-reg [1:0] state;
-reg [3:0] A;
-reg [3:0] B;
-reg [2:0] Operator;
-reg [7:0] out;
+    reg [1:0] state;
+    reg [7:0] A;
+    reg [7:0] B;
+    reg [2:0] Operator;
+    reg [7:0] out;
+    reg [2:0] flag;
+    reg sel;
+    reg clk;
 
-integer i;
-
-initial
-begin
-// ½øÈëÊäÈëA×´Ì¬
-state[1:0] = 2'b_00;
-end
-
-always @ (*)
-begin
-if (state[1:0] == 2'b_00 && enter == 1)
-begin
-    // ÊäÈëA
-    A[3:0] = a[3:0];
-    // ÏÔÊ¾A
-    for (i=3;i>=0;i=i-1)
-        displayNumber(A[i],seg[i][7:0]);
-    // ½øÈëÊäÈëB×´Ì¬
-    state[1:0] = 2'b_01;
-end
-else if (state[1:0] == 2'b_01 && enter == 1)
-begin
-    // ÊäÈëB
-    B[3:0] = a[3:0];
-    // ÏÔÊ¾B
-    for (i=3;i>=0;i=i-1)
-        displayNumber(B[i],seg[i][7:0]);
-    // ½øÈëÊäÈëÔËËã·û×´Ì¬
-    state[1:0] = 2'b_10;
-end
-else if (state[1:0] == 2'b_10 && enter == 1)
-begin
-    // ÊäÈëÔËËã·û
-    Operator[2:0] = a[2:0];
-    // ½øÈë¼ÆËã×´Ì¬
-    state[1:0] = 2'b_11;
-
-    // ¼ÆËã
-    case(Operator[2:0])
-        3'b000: out[7:0] = {4'b0000,A[3:0]};
-        3'b001: out[7:0] = {4'b0000,A[3:0]} + {4'b0000,B[3:0]};
-        3'b010: out[7:0] = {4'b0000,A[3:0]} - {4'b0000,B[3:0]};
-        3'b011: out[7:0] = {4'b0000,A[3:0]} / {4'b0000,B[3:0]};
-        3'b100: out[7:0] = {4'b0000,A[3:0]} % {4'b0000,B[3:0]};
-        3'b101: out[7:0] = {4'b0000,A[3:0]} * {4'b0000,B[3:0]};
-        3'b110: out[7:0] = {3'b000,A[3:0],1'b0};
-        3'b111: out[7:0] = {5'b00000,A[2:0]};
-    endcase
-    
-    // ÊıÂë¹ÜÊä³ö
-    for (i=7;i>=0;i=i-1)
-        displayNumber(out[i],seg[i][7:0]);
-end
-else if (state[1:0] == 2'b_11 && enter == 1)
-begin
-    // Ö´ĞĞAC²Ù×÷
-    A[3:0] = 4'b0000;
-    B[3:0] = 4'b0000;
-    Operator[2:0] = 3'bzzz;
+    initial
+    begin
+    // è¿›å…¥è¾“å…¥AçŠ¶æ€
     state[1:0] = 2'b_00;
-end
-end
+    flag[2:0] = 3'b000;
+    clk = 0;
+    sel = 0;
+    end
 
-task displayNumber;
-    input reg number;
-    output reg [7:0] seg;
-    case (number)
-        0:seg[7:0] = 8'b0000_0110;
-        1:seg[7:0] = 8'b0000_0000;
-    endcase
-endtask
+    always
+    begin
+        #5 clk = ~clk;
+        #5 flag[2:0] = flag[2:0] + 3'b001;
+        #20 sel = ~sel;
+    end
+
+    always @ (enter)
+        state[1:0] = state[1:0] + 2'b_01;
+
+    always @(state[1:0])
+    begin
+    if (state[1:0] == 2'b_00)
+        begin
+            // è¾“å…¥A
+            A[7:0] = {4'b0000,a[3:0]};
+            // æ˜¾ç¤ºA    
+            out[7:0] = A[7:0];
+        end
+        else if (state[1:0] == 2'b_01)
+        begin
+            // è¾“å…¥B
+            B[7:0] = {4'b0000,a[3:0]};
+            // æ˜¾ç¤ºB
+            out[7:0] = B[7:0];
+        end
+        else if (state[1:0] == 2'b_10)
+        begin
+            // è¾“å…¥è¿ç®—ç¬¦
+            Operator[2:0] = a[2:0];
+        end
+        // è®¡ç®—
+        if (state[1:0] == 2'b_11)
+            case(Operator[2:0])
+                3'b000: out[7:0] = A[7:0];
+                3'b001: out[7:0] = A[7:0] + B[7:0];
+                3'b010: out[7:0] = A[7:0] - B[7:0];
+                3'b011: out[7:0] = A[7:0] / B[7:0];
+                3'b100: out[7:0] = A[7:0] % B[7:0];
+                3'b101: out[7:0] = A[7:0] * B[7:0];
+                3'b110: out[7:0] = {A[6:0],1'b0};
+                3'b111: out[7:0] = {1'b0,A[7:1]};
+            endcase
+    end
+
+    always @(posedge clk)
+    begin
+        // åˆ·æ–°æ•°ç ç®¡
+        if (out[flag[2:0]] == 1)
+            if (sel == 0) 
+                seg0[7:0] = 8'b0000_0110;
+            else 
+                seg1[7:0] = 8'b0000_0110;
+        else
+            if (sel == 0) 
+                seg0[7:0] = 8'b0000_0000;
+            else 
+                seg1[7:0] = 8'b0000_0000;
+        case (flag[2:0])
+            3'b000: dig[7:0] = 8'b1111_1110;
+            3'b001: dig[7:0] = 8'b1111_1101;
+            3'b010: dig[7:0] = 8'b1111_1011;
+            3'b011: dig[7:0] = 8'b1111_0111;
+            3'b100: dig[7:0] = 8'b1110_1111;
+            3'b101: dig[7:0] = 8'b1101_1111;
+            3'b110: dig[7:0] = 8'b1011_1111;
+            3'b111: dig[7:0] = 8'b0111_1111;
+        endcase
+    end
 endmodule
