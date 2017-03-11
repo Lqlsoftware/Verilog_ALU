@@ -16,6 +16,7 @@ module ALU(
     reg [2:0] flag;
     reg sel;
     reg clk;
+    integer i;
 
     initial
     begin
@@ -24,19 +25,21 @@ module ALU(
     flag[2:0] = 3'b000;
     clk = 0;
     sel = 0;
+    i=0;
     end
 
     always
     begin
-        #5 clk = ~clk;
+        #1 clk = ~clk;
         #5 flag[2:0] = flag[2:0] + 3'b001;
+        #5 i = i==7?0:i+1;
         #20 sel = ~sel;
     end
 
-    always @ (enter)
+    always @ (posedge enter)
         state[1:0] = state[1:0] + 2'b_01;
 
-    always @(state[1:0])
+    always @(posedge enter)
     begin
     if (state[1:0] == 2'b_00)
         begin
@@ -74,7 +77,7 @@ module ALU(
     always @(posedge clk)
     begin
         // 刷新数码管
-        if (out[flag[2:0]] == 1)
+        if (out[i] == 1)
             if (sel == 0) 
                 seg0[7:0] = 8'b0000_0110;
             else 
