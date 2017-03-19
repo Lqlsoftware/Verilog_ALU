@@ -3,6 +3,7 @@
 module ALU(
     input [3:0] a,
     input enter,
+    input clk,
     output reg [7:0] dig,
     output reg [7:0] seg0,
     output reg [7:0] seg1
@@ -15,30 +16,12 @@ module ALU(
     reg [7:0] out;
     reg [2:0] flag;
     reg sel;
-    reg clk;
-    integer i;
+    reg [15:0] cnt;
 
-    initial
-    begin
-    // 进入输入A状态
-    state[1:0] = 2'b_00;
-    flag[2:0] = 3'b000;
-    clk = 0;
-    sel = 0;
-    i=0;
-    end
-
-    always
-    begin
-        #1 clk = ~clk;
-        #5 flag[2:0] = flag[2:0] + 3'b001;
-        #5 i = i==7?0:i+1;
-        #20 sel = ~sel;
-    end
-
-    always @ (posedge enter)
-        state[1:0] = state[1:0] + 2'b_01;
-
+    always @ (posedge clk)
+        cnt <= cnt +1;
+    assign c15 =~cnt[15];
+    
     always @(posedge enter)
     begin
     if (state[1:0] == 2'b_00)
@@ -47,6 +30,7 @@ module ALU(
             A[7:0] = {4'b0000,a[3:0]};
             // 显示A    
             out[7:0] = A[7:0];
+            state[1:0] = state[1:0] + 1;
         end
         else if (state[1:0] == 2'b_01)
         begin
@@ -54,14 +38,17 @@ module ALU(
             B[7:0] = {4'b0000,a[3:0]};
             // 显示B
             out[7:0] = B[7:0];
+            state[1:0] = state[1:0] + 1;
         end
         else if (state[1:0] == 2'b_10)
         begin
             // 输入运算符
             Operator[2:0] = a[2:0];
+            state[1:0] = state[1:0] + 1;
         end
         // 计算
         if (state[1:0] == 2'b_11)
+        begin
             case(Operator[2:0])
                 3'b000: out[7:0] = A[7:0];
                 3'b001: out[7:0] = A[7:0] + B[7:0];
@@ -72,12 +59,17 @@ module ALU(
                 3'b110: out[7:0] = {A[6:0],1'b0};
                 3'b111: out[7:0] = {1'b0,A[7:1]};
             endcase
+            state[1:0] = state[1:0] + 1;
+        end
     end
 
-    always @(posedge clk)
+    always @(posedge c15)
     begin
+        flag[2:0] = flag[2:0] + 3'b001;
+        if (flag[2:0] == 3'b100 || flag[2:0] == 3'b000)
+            sel = ~sel;
         // 刷新数码管
-        if (out[i] == 1)
+        if (out[flag[2:0]] == 1)
             if (sel == 0) 
                 seg0[7:0] = 8'b0000_0110;
             else 
